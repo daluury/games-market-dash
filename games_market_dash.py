@@ -63,16 +63,16 @@ app.layout = html.Div([
         # ],
         # style = {'width': '49%', 'display': 'inline-block'}), 
 
-        html.Div([
-            dcc.Graph(
-                id = 'stacked-area-plot',
-                figure = px.area(
-                    data, x = "Year_of_Release", y = "Critic_Score", color = "Platform"
-                    # ,line_group = ""
-                ) 
-            )
-        ],
-        style = {'width': '49%', 'display': 'inline-block'}), 
+        # html.Div([
+        #     dcc.Graph(
+        #         id = 'stacked-area-plot',
+        #         figure = px.area(
+        #             data, x = "Year_of_Release", y = "Critic_Score", color = "Platform"
+        #             # ,line_group = ""
+        #         ) 
+        #     )
+        # ],
+        # style = {'width': '49%', 'display': 'inline-block'}), 
 
         # html.Div([
         #     dcc.Graph(
@@ -84,6 +84,11 @@ app.layout = html.Div([
         # ],
         # style = {'width': '49%', 'float': 'right', 'display': 'inline-block'}), 
 
+        html.Div([
+            dcc.Graph(id = 'stacked-area-plot')
+        ],
+        style = {'width': '49%', 'display': 'inline-block'}), 
+        
         html.Div([
             dcc.Graph(id = 'scatter-plot')
         ],
@@ -103,15 +108,37 @@ app.layout = html.Div([
 ])
 
 @app.callback(
+    Output('stacked-area-plot', 'figure'), 
+    [Input('crossfilter-genre', 'value'),
+    Input('crossfilter-rating', 'value'),
+    Input('crossfilter-year', 'value')])
+def update_stacked_area(genre, rating, year):
+    filtered_data = data[data['Year_of_Release'] <= year]
+    filtered_data = filtered_data[filtered_data['Genre'].isin(genre)]
+    filtered_data = filtered_data[filtered_data['Rating'].isin(rating)]
+
+    figure = px.area(
+        filtered_data, x = "Year_of_Release", y = "Critic_Score", color = "Platform"
+        # ,line_group = ""
+    )
+
+    return figure
+
+@app.callback(
     Output('scatter-plot', 'figure'), 
     [Input('crossfilter-genre', 'value'),
-    Input('crossfilter-rating', 'value')
+    Input('crossfilter-rating', 'value'),
     Input('crossfilter-year', 'value')])
-def  update_scatter(genre, rating, year):
-    data_filter = data[data['Year_of_Release'] == year]
+def update_scatter(genre, rating, year):
+    filtered_data = data[data['Year_of_Release'] <= year]
+    filtered_data = filtered_data[filtered_data['Genre'].isin(genre)]
+    filtered_data = filtered_data[filtered_data['Rating'].isin(rating)]
 
-    
-    
+
+    figure = px.scatter(
+         filtered_data, x = "User_Score", y = "Critic_Score", color = "Genre"
+    )
+
     return figure
 
 
