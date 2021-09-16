@@ -3,7 +3,6 @@ import dash_core_components as dcc
 import dash_html_components as html
 import pandas as pd
 import plotly.express as px
-#import plotly.graph_objs as go
 from dash.dependencies import Input, Output
 
 data = pd.read_hdf('./Norm_games.h5')
@@ -55,13 +54,10 @@ app.layout = html.Div([
             'padding': '10px 5px'
         }),
 
-        # html.Div([
-        #     dcc.Textarea(
-        #         #id= ,
-                
-        #     )
-        # ],
-        # style = {'width': '49%', 'display': 'inline-block'}), 
+        html.Div(
+            id = 'textarea-output',
+            style = {'width': '100%', 'float': 'right', 'display': 'inline-block'}
+        ), 
 
         # html.Div([
         #     dcc.Graph(
@@ -84,17 +80,17 @@ app.layout = html.Div([
         # ],
         # style = {'width': '49%', 'float': 'right', 'display': 'inline-block'}), 
 
-        html.Div([
-            dcc.Graph(id = 'stacked-area-plot')
-        ],
-        style = {'width': '49%', 'display': 'inline-block'}), 
+        html.Div(
+            dcc.Graph(id = 'stacked-area-plot'),
+            style = {'width': '49%', 'display': 'inline-block'}
+        ), 
         
-        html.Div([
-            dcc.Graph(id = 'scatter-plot')
-        ],
-        style = {'width': '49%', 'float': 'right', 'display': 'inline-block'}), 
+        html.Div(
+            dcc.Graph(id = 'scatter-plot'),
+            style = {'width': '49%', 'float': 'right', 'display': 'inline-block'}
+        ), 
 
-        html.Div([
+        html.Div(
             dcc.Slider(
                 id = 'crossfilter-year',
                 min = data['Year_of_Release'].min(),
@@ -102,10 +98,26 @@ app.layout = html.Div([
                 value = 2008,
                 step = None,
                 marks = {str(year): str(year) for year in data['Year_of_Release'].unique()}
-                ) 
-        ], 
-        style = {'width': '49%', 'padding': '0px 20px 20px 20px'})
+                ), 
+            style = {'width': '49%', 'padding': '0px 20px 20px 20px'}
+        )
 ])
+
+@app.callback(
+    Output('textarea-output', 'children'), 
+    [Input('crossfilter-genre', 'value'),
+    Input('crossfilter-rating', 'value'),
+    Input('crossfilter-year', 'value')])
+def update_textarea(genre, rating, year):
+    filtered_data = data[data['Year_of_Release'] <= year]
+    filtered_data = filtered_data[filtered_data['Genre'].isin(genre)]
+    filtered_data = filtered_data[filtered_data['Rating'].isin(rating)]
+
+    games_count = len(filtered_data.index)
+
+    return 'Результат фильтрации: {}'.format(games_count)
+
+
 
 @app.callback(
     Output('stacked-area-plot', 'figure'), 
@@ -118,7 +130,7 @@ def update_stacked_area(genre, rating, year):
     filtered_data = filtered_data[filtered_data['Rating'].isin(rating)]
 
     figure = px.area(
-        filtered_data, x = "Year_of_Release", y = "Critic_Score", color = "Platform"
+        filtered_data, x = "Year_of_Release", y = "User_Score", color = "Platform"
         # ,line_group = ""
     )
 
@@ -133,7 +145,6 @@ def update_scatter(genre, rating, year):
     filtered_data = data[data['Year_of_Release'] <= year]
     filtered_data = filtered_data[filtered_data['Genre'].isin(genre)]
     filtered_data = filtered_data[filtered_data['Rating'].isin(rating)]
-
 
     figure = px.scatter(
          filtered_data, x = "User_Score", y = "Critic_Score", color = "Genre"
