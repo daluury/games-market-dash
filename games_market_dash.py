@@ -1,5 +1,5 @@
 import dash
-import dash_core_components as dcc #интерактивные компоненты
+import dash_core_components as dcc
 import dash_html_components as html
 import pandas as pd
 import plotly.express as px
@@ -7,13 +7,14 @@ from dash.dependencies import Input, Output
 
 data = pd.read_hdf('./Norm_games.h5')
 
+# инициализация Dash
 app = dash.Dash()
 
 # переменные с жанрами и рейтингами для фильтрации
 available_genre = data['Genre'].unique()
 available_rating = data['Rating'].unique()
 
-# инициализация и определение внешнего вида приложения dash
+# определение внешнего вида приложения dash
 app.layout = html.Div([
         html.Div([
             html.H1("Состояние игровой индустрии"),
@@ -34,7 +35,9 @@ app.layout = html.Div([
                 dcc.Dropdown(
                     id = 'crossfilter-genre',
                     options = [{'label': i, 'value': i} for i in available_genre],
-                    value = ['Sports', 'Strategy'], # значения по умолчанию
+                    # значения жанров по умолчанию
+                    value = ['Sports', 'Strategy'],
+                    # множественный выбор
                     multi = True 
                 )
             ],
@@ -46,7 +49,8 @@ app.layout = html.Div([
                 dcc.Dropdown(
                     id = 'crossfilter-rating',
                     options = [{'label': i, 'value': i} for i in available_rating],
-                    value = ['T', 'E'], # значения по умолчанию
+                    # значения рейтингов по умолчанию
+                    value = ['T', 'E'],
                     multi = True 
                 )
             ],
@@ -81,13 +85,16 @@ app.layout = html.Div([
                 id = 'crossfilter-year',
                 min = data['Year_of_Release'].min(),
                 max = data['Year_of_Release'].max(),
-                value = 2008, # значение по умолчанию
+                # значение по умолчанию
+                value = 2008,
                 step = None,
-                marks = {str(year): str(year) for year in data['Year_of_Release'].unique()}
+                # какие берем значения
+                marks = {str(year): 
+                    str(year) for year in data['Year_of_Release'].unique()}
                 ), 
             style = {'width': '49%', 'padding': '0px 20px 20px 20px'}
         )
-])
+ ])
 
 # обратный вызов результата фильтрации
 @app.callback(
@@ -96,12 +103,11 @@ app.layout = html.Div([
     Input('crossfilter-rating', 'value'),
     Input('crossfilter-year', 'value')])
 def update_textarea(genre, rating, year):
-    filtered_data = data[data['Year_of_Release'] <= year]
-    filtered_data = filtered_data[filtered_data['Genre'].isin(genre)]
-    filtered_data = filtered_data[filtered_data['Rating'].isin(rating)]
-
+    filtered_data = data[(data['Year_of_Release'] <= year) & 
+        (data['Genre'].isin(genre)) & 
+        (data['Rating'].isin(rating))]
+    # результат фильтрации
     games_count = len(filtered_data.index)
-
     return 'Результат фильтрации: {}'.format(games_count)
 
 
@@ -112,10 +118,10 @@ def update_textarea(genre, rating, year):
     Input('crossfilter-rating', 'value'),
     Input('crossfilter-year', 'value')])
 def update_stacked_area(genre, rating, year):
-    filtered_data = data[data['Year_of_Release'] <= year]
-    filtered_data = filtered_data[filtered_data['Genre'].isin(genre)]
-    filtered_data = filtered_data[filtered_data['Rating'].isin(rating)]
-
+    filtered_data = data[(data['Year_of_Release'] <= year) & 
+        (data['Genre'].isin(genre)) & 
+        (data['Rating'].isin(rating))]
+    # задаем график
     figure = px.histogram(
         filtered_data, 
         x = "Year_of_Release",
@@ -127,7 +133,6 @@ def update_stacked_area(genre, rating, year):
          title = "Гистограмма рейтингов игр по годам"
     )
     figure.update_layout(yaxis_title = "Кол-во")
-
     return figure
 
 # обратный вызов scatter plot
@@ -137,10 +142,10 @@ def update_stacked_area(genre, rating, year):
     Input('crossfilter-rating', 'value'),
     Input('crossfilter-year', 'value')])
 def update_scatter(genre, rating, year):
-    filtered_data = data[data['Year_of_Release'] <= year]
-    filtered_data = filtered_data[filtered_data['Genre'].isin(genre)]
-    filtered_data = filtered_data[filtered_data['Rating'].isin(rating)]
-
+    filtered_data = data[(data['Year_of_Release'] <= year) & 
+        (data['Genre'].isin(genre)) & 
+        (data['Rating'].isin(rating))]
+    # задаем график
     figure = px.scatter(
          filtered_data, 
          x = "User_Score", 
@@ -153,10 +158,7 @@ def update_scatter(genre, rating, year):
          },
          title = "Зависимость оценок от жанров"
     )
-
     return figure
-
-
 
 if __name__ == '__main__':
     app.run_server()
